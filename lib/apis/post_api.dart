@@ -7,6 +7,7 @@ import 'package:mindvine/core/core.dart';
 import 'package:mindvine/core/providers.dart';
 import 'package:mindvine/models/post_model.dart';
 
+// Provider for accessing the PostAPI
 final postAPIProvider = Provider((ref) {
   return PostAPI(
     db: ref.watch(appwriteDatabaseProvider),
@@ -14,6 +15,7 @@ final postAPIProvider = Provider((ref) {
   );
 });
 
+// Abstract class defining the contract for the PostAPI
 abstract class IPostAPI {
   FutureEither<Document> sharePost(Post post);
   Future<List<Document>> getPosts();
@@ -26,20 +28,24 @@ abstract class IPostAPI {
   Future<List<Document>> getPostsByHashtag(String hashtag);
 }
 
+// Implementation of the PostAPI
 class PostAPI implements IPostAPI {
   final Databases _db;
   final Realtime _realtime;
+
   PostAPI({required Databases db, required Realtime realtime})
       : _db = db,
         _realtime = realtime;
+
   @override
   FutureEither<Document> sharePost(Post post) async {
     try {
       final document = await _db.createDocument(
-          databaseId: AppwriteConstants.databaseId,
-          collectionId: AppwriteConstants.postCollection,
-          documentId: ID.unique(),
-          data: post.toMap());
+        databaseId: AppwriteConstants.databaseId,
+        collectionId: AppwriteConstants.postCollection,
+        documentId: ID.unique(),
+        data: post.toMap(),
+      );
       return right(document);
     } on AppwriteException catch (e, st) {
       return left(
@@ -56,12 +62,10 @@ class PostAPI implements IPostAPI {
   @override
   Future<List<Document>> getPosts() async {
     final documents = await _db.listDocuments(
-      databaseId: AppwriteConstants.databaseId,
-      collectionId: AppwriteConstants.postCollection,
-      queries: [
-        Query.orderDesc('postedAt'),
-      ],
-    );
+        databaseId: AppwriteConstants.databaseId,
+        collectionId: AppwriteConstants.postCollection,
+        queries: [Query.orderDesc('postedAt')]);
+
     return documents.documents;
   }
 
@@ -76,18 +80,21 @@ class PostAPI implements IPostAPI {
   FutureEither<Document> likePost(Post post) async {
     try {
       final document = await _db.updateDocument(
-          databaseId: AppwriteConstants.databaseId,
-          collectionId: AppwriteConstants.postCollection,
-          documentId: post.id,
-          data: {
-            'likes': post.likes,
-          });
+        databaseId: AppwriteConstants.databaseId,
+        collectionId: AppwriteConstants.postCollection,
+        documentId: post.id,
+        data: {
+          "likes": post.likes,
+        },
+      );
       return right(document);
     } on AppwriteException catch (e, st) {
-      return left(Failure(
-        e.message ?? 'Some unexpected error occurred',
-        st,
-      ));
+      return left(
+        Failure(
+          e.message ?? 'Some unexpected error occurred',
+          st,
+        ),
+      );
     } catch (e, st) {
       return left(Failure(e.toString(), st));
     }
@@ -101,7 +108,7 @@ class PostAPI implements IPostAPI {
         collectionId: AppwriteConstants.postCollection,
         documentId: post.id,
         data: {
-          'reshareCount': post.reshareCount,
+          "reshareCount": post.reshareCount,
         },
       );
       return right(document);

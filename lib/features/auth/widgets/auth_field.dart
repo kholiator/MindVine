@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mindvine/theme/pallete.dart';
 
 class AuthField extends StatelessWidget {
+  // controller make different instance for every textFormField
   final TextEditingController controller;
   final String hintText;
   const AuthField(
@@ -12,22 +13,23 @@ class AuthField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Pallete.blueColor,
-                width: 3,
-              )),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: Pallete.greyColor,
-              )),
-          contentPadding: const EdgeInsets.all(22),
-          hintText: hintText,
-          hintStyle: const TextStyle(
-            fontSize: 20,
-          )),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(25),
+          borderSide: const BorderSide(
+            color: Pallete.blueColor,
+            width: 2,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(25),
+          borderSide: const BorderSide(
+            color: Pallete.greyColor,
+          ),
+        ),
+        contentPadding: const EdgeInsets.all(22),
+        hintText: hintText,
+        hintStyle: const TextStyle(fontSize: 18),
+      ),
     );
   }
 }

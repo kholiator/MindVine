@@ -5,31 +5,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mindvine/apis/post_api.dart';
 import 'package:mindvine/apis/storage_api.dart';
+import 'package:mindvine/core/enums/notification_type_enum.dart';
 import 'package:mindvine/core/enums/post_type_enum.dart';
 import 'package:mindvine/features/auth/controller/auth_controller.dart';
+import 'package:mindvine/features/notifications/controller/notification_controller.dart';
 import 'package:mindvine/models/post_model.dart';
 import 'package:mindvine/models/user_model.dart';
+
 import '../../../core/utils.dart';
 
-final postControllerProvider =
-    StateNotifierProvider<PostController, bool>((ref) {
-  return PostController(
-    ref: ref,
-    postAPI: ref.watch(postAPIProvider),
-    storageAPI: ref.watch(storageAPIProvider),
-  );
-});
+// Provider definitions
 
-final getPostsProvider = FutureProvider((ref) {
+final postControllerProvider = StateNotifierProvider<PostController, bool>(
+  (ref) {
+    return PostController(
+      ref: ref,
+      postAPI: ref.watch(postAPIProvider),
+      storageAPI: ref.watch(storageAPIProvider),
+      notificationController:
+          ref.watch(notificationControllerProvider.notifier),
+    );
+  },
+);
+
+final getPostsProvider = FutureProvider.autoDispose((ref) {
   final postController = ref.watch(postControllerProvider.notifier);
   return postController.getPosts();
 });
+
 final getRepliesToPostsProvider = FutureProvider.family((ref, Post post) {
   final postController = ref.watch(postControllerProvider.notifier);
   return postController.getRepliesToPost(post);
 });
 
-final getLatestPostProvider = StreamProvider((ref) {
+final getLatestPostProvider = StreamProvider.autoDispose((ref) {
   final postAPI = ref.watch(postAPIProvider);
   return postAPI.getLatestPost();
 });
@@ -44,29 +53,38 @@ final getPostsByHashtagProvider = FutureProvider.family((ref, String hashtag) {
   return postController.getPostsByHashtag(hashtag);
 });
 
+// PostController class
+
 class PostController extends StateNotifier<bool> {
   final PostAPI _postAPI;
   final StorageAPI _storageAPI;
+  final NotificationController _notificationController;
   final Ref _ref;
-  PostController(
-      {required Ref ref,
-      required PostAPI postAPI,
-      required StorageAPI storageAPI})
-      : _ref = ref,
+
+  PostController({
+    required Ref ref,
+    required PostAPI postAPI,
+    required StorageAPI storageAPI,
+    required NotificationController notificationController,
+  })  : _ref = ref,
         _postAPI = postAPI,
         _storageAPI = storageAPI,
+        _notificationController = notificationController,
         super(false);
 
+  // Fetches all posts
   Future<List<Post>> getPosts() async {
     final postList = await _postAPI.getPosts();
     return postList.map((post) => Post.fromMap(post.data)).toList();
   }
 
+  // Fetches a post by its ID
   Future<Post> getPostById(String id) async {
     final post = await _postAPI.getPostById(id);
     return Post.fromMap(post.data);
   }
 
+  // Likes or unlikes a post
   void likePost(Post post, UserModel user) async {
     List<String> likes = post.likes;
 
@@ -78,47 +96,49 @@ class PostController extends StateNotifier<bool> {
 
     post = post.copyWith(likes: likes);
     final res = await _postAPI.likePost(post);
-    res.fold((l) => null, (r) => null);
+    res.fold((l) => null, (r) {
+      _notificationController.createNotification(
+        text: '${user.name} liked your post!',
+        postId: post.id,
+        notificationType: NotificationType.like,
+        uid: post.uid,
+      );
+    });
   }
 
+  // Reshares a post
   void resharePost(
-    Post post,
-    UserModel currentUser,
-    BuildContext context,
-  ) async {
+      Post post, UserModel currentUser, BuildContext context) async {
     post = post.copyWith(
-      repostedBy: currentUser.name,
-      likes: [],
-      commentIds: [],
-      reshareCount: post.reshareCount + 1,
-    );
+        repostedBy: currentUser.name,
+        likes: [],
+        commentIds: [],
+        reshareCount: post.reshareCount + 1);
 
     final res = await _postAPI.updateReshareCount(post);
-    res.fold(
-      (l) => showSnackBar(context, l.message),
-      (r) async {
-        post = post.copyWith(
-          id: ID.unique(),
-          reshareCount: 0,
-          postedAt: DateTime.now(),
-        );
-        final res2 = await _postAPI.sharePost(post);
-        res2.fold((l) => showSnackBar(context, l.message),
-            (r) => showSnackBar(context, 'Reposted!')
-            // (r) {
-            // _notificationController.createNotification(
-            //   text: '${currentUser.name} reshared your tweet!',
-            //   postId: post.id,
-            //   notificationType: NotificationType.retweet,
-            //   uid: post.uid,
-            // );
-            // showSnackBar(context, 'Reposted!');
-            // },
-            );
-      },
-    );
+    res.fold((l) => showSnackBar(context, l.message), (r) async {
+      post = post.copyWith(
+        id: ID.unique(),
+        reshareCount: 0,
+        postedAt: DateTime.now(),
+      );
+      final res2 = await _postAPI.sharePost(post);
+      res2.fold(
+        (l) => showSnackBar(context, l.message),
+        (r) {
+          _notificationController.createNotification(
+            text: '${currentUser.name} shared your post!',
+            postId: post.id,
+            notificationType: NotificationType.repost,
+            uid: post.uid,
+          );
+          showSnackBar(context, 'Reshared!');
+        },
+      );
+    });
   }
 
+  // Shares a post (text or image)
   void sharePost({
     required List<File> images,
     required String text,
@@ -149,6 +169,7 @@ class PostController extends StateNotifier<bool> {
     }
   }
 
+  // Fetches replies to a post
   Future<List<Post>> getRepliesToPost(Post post) async {
     final documents = await _postAPI.getRepliesToPost(post);
     return documents.map((post) => Post.fromMap(post.data)).toList();
@@ -160,15 +181,16 @@ class PostController extends StateNotifier<bool> {
     return documents.map((post) => Post.fromMap(post.data)).toList();
   }
 
+  // Shares an image post
   void _shareImagePost({
     required List<File> images,
     required String text,
     required BuildContext context,
-    required String repliedToUserId,
     required String repliedTo,
+    required String repliedToUserId,
   }) async {
     state = true;
-    final hashtags = _getHashtagFromText(text);
+    final hashtags = _getHashtagsFromText(text);
     String link = _getLinkFromText(text);
     final user = _ref.read(currentUserDetailsProvider).value!;
     final imageLinks = await _storageAPI.uploadImage(images);
@@ -187,10 +209,21 @@ class PostController extends StateNotifier<bool> {
         repostedBy: '',
         repliedTo: repliedTo);
     final res = await _postAPI.sharePost(post);
+
+    res.fold((l) => showSnackBar(context, l.message), (r) {
+      if (repliedToUserId.isNotEmpty) {
+        _notificationController.createNotification(
+          text: '${user.name} replied to your tweet!',
+          postId: r.$id,
+          notificationType: NotificationType.reply,
+          uid: repliedToUserId,
+        );
+      }
+    });
     state = false;
-    res.fold((l) => showSnackBar(context, l.message), (r) => null);
   }
 
+  // Shares a text post
   void _shareTextPost({
     required String text,
     required BuildContext context,
@@ -198,7 +231,7 @@ class PostController extends StateNotifier<bool> {
     required String repliedToUserId,
   }) async {
     state = true;
-    final hashtags = _getHashtagFromText(text);
+    final hashtags = _getHashtagsFromText(text);
     String link = _getLinkFromText(text);
     final user = _ref.read(currentUserDetailsProvider).value!;
     Post post = Post(
@@ -216,10 +249,21 @@ class PostController extends StateNotifier<bool> {
         repostedBy: '',
         repliedTo: repliedTo);
     final res = await _postAPI.sharePost(post);
+
+    res.fold((l) => showSnackBar(context, l.message), (r) {
+      if (repliedToUserId.isNotEmpty) {
+        _notificationController.createNotification(
+          text: '${user.name} replied to your post!',
+          postId: r.$id,
+          notificationType: NotificationType.reply,
+          uid: repliedToUserId,
+        );
+      }
+    });
     state = false;
-    res.fold((l) => showSnackBar(context, l.message), (r) => null);
   }
 
+  // Extracts link from text
   String _getLinkFromText(String text) {
     String link = '';
     List<String> wordsInSentence = text.split(' ');
@@ -231,7 +275,8 @@ class PostController extends StateNotifier<bool> {
     return link;
   }
 
-  List<String> _getHashtagFromText(String text) {
+  // Extracts hashtags from text
+  List<String> _getHashtagsFromText(String text) {
     List<String> hashtags = [];
     List<String> wordsInSentence = text.split(' ');
     for (String word in wordsInSentence) {

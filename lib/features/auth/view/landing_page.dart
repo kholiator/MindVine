@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mindvine/features/auth/view/login_view.dart';
 import 'package:mindvine/features/auth/view/signup_view.dart';
+import 'package:mindvine/theme/pallete.dart';
 
 class LandingPage extends StatelessWidget {
   static route() => MaterialPageRoute(
@@ -17,49 +18,36 @@ class LandingPage extends StatelessWidget {
         backgroundColor: Colors.black,
         body: Container(
           width: MediaQuery.of(context).size.width,
-          decoration: const BoxDecoration(
-              image: DecorationImage(
-                  image: AssetImage('assets/images/img_1.png'),
-                  fit: BoxFit.cover)),
           child: Column(children: [
             SizedBox(
-              height: 10,
-            ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                height: 80,
-                width: 80,
-                child: Image.asset('assets/images/img.png'),
-              ),
+              height: 100,
             ),
             SizedBox(
-              height: 350,
+              height: 100,
             ),
             Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Show your\n Funny Side",
-                      style: GoogleFonts.pacifico(
-                          color: Colors.white,
-                          fontSize: 35,
-                          fontWeight: FontWeight.bold)),
-                  // Text("Funny Side",
-                  //     style: GoogleFonts.pacifico(
-                  //         color: Colors.white,
-                  //         fontSize: 35,
-                  //         fontWeight: FontWeight.bold)),
+                  RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                          text: "Connect your Mind with\n",
+                          style: GoogleFonts.pacifico(
+                              color: Colors.white,
+                              fontSize: 35,
+                              fontWeight: FontWeight.bold),
+                          children: [
+                            TextSpan(
+                              text: ' MindVine',
+                              style: GoogleFonts.pacifico(
+                                  color: Pallete.blueColor,
+                                  fontSize: 35,
+                                  fontWeight: FontWeight.bold),
+                            )
+                          ])),
                 ]),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              child: Text(
-                "Powering humor and creativity through meme collaboration. Laugh, create, connect.",
-                style: GoogleFonts.kalam(
-                    fontSize: 20, color: Colors.white.withOpacity(0.8)),
-              ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 100),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 30),
               child: Row(
@@ -97,8 +85,8 @@ class LandingPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                     child: ElevatedButton(
                       style: ButtonStyle(
-                          backgroundColor: const MaterialStatePropertyAll(
-                              Color.fromRGBO(240, 46, 101, 1)),
+                          backgroundColor:
+                              const MaterialStatePropertyAll(Pallete.blueColor),
                           shape:
                               MaterialStateProperty.all<RoundedRectangleBorder>(
                                   RoundedRectangleBorder(

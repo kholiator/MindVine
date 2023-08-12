@@ -39,10 +39,6 @@ class ReplyScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Post'),
       ),
-      // changes Made by Akhil
-
-      /*Wrapping the Column with SingleChildScrollView: The SingleChildScrollView is a widget that allows its content to scroll if it exceeds the available space. By wrapping the Column containing your post cards and input field with SingleChildScrollView, we ensure that the content can be scrolled if it overflows, instead of causing a layout error.*/
-
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -97,9 +93,6 @@ class ReplyScreen extends ConsumerWidget {
                               }
                             }
 
-                            //Changes made by Akhil
-                            /*Adding shrinkWrap: true and physics: NeverScrollableScrollPhysics() to the ListView.builder: Since the ListView.builder is now nested within the SingleChildScrollView, we need to configure it to have a fixed height and not scroll itself. Setting shrinkWrap to true allows the ListView.builder to size itself based on its content, and physics set to NeverScrollableScrollPhysics() disables scrolling within the ListView.builder.*/
-
                             return ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
@@ -114,8 +107,6 @@ class ReplyScreen extends ConsumerWidget {
                             error: error.toString(),
                           ),
                           loading: () {
-                            //changes made by Akhil
-
                             return ListView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),

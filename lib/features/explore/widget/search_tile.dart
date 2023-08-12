@@ -9,6 +9,7 @@ The _buildUserDetails method uses a Column widget to display multiple lines of t
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:mindvine/features/user_profile/view/user_profile_view.dart';
 import 'package:mindvine/models/user_model.dart';
 import 'package:mindvine/theme/pallete.dart';
 
@@ -33,10 +34,10 @@ class SearchTile extends StatelessWidget {
   }
 
   void _navigateToUserProfile(BuildContext context) {
-    // Navigator.push(
-    //   context,
-    //   UserProfileView.route(userModel),
-    // );
+    Navigator.push(
+      context,
+      UserProfileView.route(userModel),
+    );
   }
 
   Widget _buildUserAvatar() {

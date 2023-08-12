@@ -64,17 +64,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
                   const SizedBox(
                     height: 15,
                   ),
-                  // Align(
-                  //   alignment: Alignment.topLeft,
-                  //   child: Text(
-                  //     'Welcome back .\nYou’ve been missed !',
-                  //     style: GoogleFonts.inter(
-                  //       color: const Color(0xffffffff).withOpacity(0.5),
-                  //       fontSize: 18,
-                  //       fontWeight: FontWeight.w500,
-                  //     ),
-                  //   ),
-                  // ),
                   const SizedBox(
                     height: 30.0,
                   ),
